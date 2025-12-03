@@ -20,9 +20,23 @@ public class OpenApiConfig {
     @Value("${server.port:8080}")
     private String serverPort;
 
+    @Value("${WEBSITE_HOSTNAME:}")
+    private String azureHostname;
+
     @Bean
     public OpenAPI customOpenAPI() {
         final String securitySchemeName = "bearerAuth";
+
+        Server server;
+        if (azureHostname != null && !azureHostname.isEmpty()) {
+            server = new Server()
+                    .url("https://" + azureHostname)
+                    .description("Production Server");
+        } else {
+            server = new Server()
+                    .url("http://localhost:" + serverPort)
+                    .description("Development Server");
+        }
 
         return new OpenAPI()
                 .info(new Info()
@@ -36,10 +50,7 @@ public class OpenApiConfig {
                         .license(new License()
                                 .name("Proprietary")
                                 .url("https://www.ecatleasing.com/license")))
-                .servers(List.of(
-                        new Server()
-                                .url("http://localhost:" + serverPort)
-                                .description("Development Server")))
+                .servers(List.of(server))
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
                 .components(new Components()
                         .addSecuritySchemes(securitySchemeName,
